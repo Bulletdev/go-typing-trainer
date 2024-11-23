@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 
+	"github.com/bulletdev/go-typing-trainer/game"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/yourusername/go-typing-trainer/game"
 )
 
 type Database struct {
