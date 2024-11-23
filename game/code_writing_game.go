@@ -6,39 +6,78 @@ import (
 )
 
 type CodeWritingGame struct {
-	BaseGame
-	CodeSnippet string
+	*BaseGame
+	codeSnippet string
 }
 
 func NewCodeWritingGame(level DifficultyLevel, antiCheat AntiCheatInterface, db DatabaseInterface) *CodeWritingGame {
 	return &CodeWritingGame{
-		BaseGame: BaseGame{
-			DifficultyLevel: level,
-			AntiCheat:       antiCheat,
-			Database:        db,
+		BaseGame: &BaseGame{
+			score:           0,
+			startTime:       time.Time{},
+			keyPresses:      0,
+			difficultyLevel: level,
+			antiCheat:       antiCheat,
+			database:        db,
 		},
-		CodeSnippet: getCodeSnippetForLevel(level),
+		codeSnippet: getCodeSnippetForLevel(level),
 	}
 }
 
 func (g *CodeWritingGame) Start() {
-	g.StartTime = time.Now()
+	g.startTime = time.Now()
 	fmt.Println("Write the following code snippet:")
-	fmt.Println(g.CodeSnippet)
-	// Implement input reading and scoring logic here
+	fmt.Println(g.codeSnippet)
 }
 
 func (g *CodeWritingGame) Stop() {
-	duration := time.Since(g.StartTime)
-	if g.AntiCheat.DetectCheating(g.KeyPresses, duration) {
+	duration := time.Since(g.startTime)
+	if g.antiCheat.DetectCheating(g.keyPresses, duration) {
 		fmt.Println("Cheating detected!")
 		return
 	}
-	g.Database.SaveScore(g.Score, "code_writing", g.DifficultyLevel)
-	fmt.Printf("Game Over! Your score: %d, APM: %.2f\n", g.Score, g.GetAPM())
+	g.database.SaveScore(g.score, "code_writing", g.difficultyLevel)
+	fmt.Printf("Game Over! Your score: %d, APM: %.2f\n", g.GetScore(), g.GetAPM())
+}
+
+func (g *CodeWritingGame) GetScore() int {
+	return g.BaseGame.GetScore()
+}
+
+func (g *CodeWritingGame) GetAPM() float64 {
+	return g.BaseGame.GetAPM()
 }
 
 func getCodeSnippetForLevel(level DifficultyLevel) string {
-	// Implement code snippet selection based on difficulty level
-	return "func main() {\n\tfmt.Println(\"Hello, World!\")\n}"
+	switch level {
+	case Junior:
+		return `func main() {
+    fmt.Println("Hello, World!")
+}`
+	case Pleno:
+		return `func fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n-1) + fibonacci(n-2)
+}`
+	case Senior:
+		return `type TreeNode struct {
+    Val int
+    Left *TreeNode
+    Right *TreeNode
+}
+
+func inorderTraversal(root *TreeNode) []int {
+    var result []int
+    if root != nil {
+        result = append(result, inorderTraversal(root.Left)...)
+        result = append(result, root.Val)
+        result = append(result, inorderTraversal(root.Right)...)
+    }
+    return result
+}`
+	default:
+		return `func main() {}`
+	}
 }

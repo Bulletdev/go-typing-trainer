@@ -6,39 +6,57 @@ import (
 )
 
 type TypingGame struct {
-	BaseGame
-	Text string
+	*BaseGame
+	text string
 }
 
 func NewTypingGame(level DifficultyLevel, antiCheat AntiCheatInterface, db DatabaseInterface) *TypingGame {
 	return &TypingGame{
-		BaseGame: BaseGame{
-			DifficultyLevel: level,
-			AntiCheat:       antiCheat,
-			Database:        db,
+		BaseGame: &BaseGame{
+			score:           0,
+			startTime:       time.Time{},
+			keyPresses:      0,
+			difficultyLevel: level,
+			antiCheat:       antiCheat,
+			database:        db,
 		},
-		Text: getTextForLevel(level),
+		text: getTextForLevel(level),
 	}
 }
 
 func (g *TypingGame) Start() {
-	g.StartTime = time.Now()
+	g.startTime = time.Now()
 	fmt.Println("Type the following text:")
-	fmt.Println(g.Text)
-	// Implement input reading and scoring logic here
+	fmt.Println(g.text)
 }
 
 func (g *TypingGame) Stop() {
-	duration := time.Since(g.StartTime)
-	if g.AntiCheat.DetectCheating(g.KeyPresses, duration) {
+	duration := time.Since(g.startTime)
+	if g.antiCheat.DetectCheating(g.keyPresses, duration) {
 		fmt.Println("Cheating detected!")
 		return
 	}
-	g.Database.SaveScore(g.Score, "typing", g.DifficultyLevel)
-	fmt.Printf("Game Over! Your score: %d, APM: %.2f\n", g.Score, g.GetAPM())
+	g.database.SaveScore(g.score, "typing", g.difficultyLevel)
+	fmt.Printf("Game Over! Your score: %d, APM: %.2f\n", g.GetScore(), g.GetAPM())
+}
+
+func (g *TypingGame) GetScore() int {
+	return g.BaseGame.GetScore()
+}
+
+func (g *TypingGame) GetAPM() float64 {
+	return g.BaseGame.GetAPM()
 }
 
 func getTextForLevel(level DifficultyLevel) string {
-	// Implement text selection based on difficulty level
-	return "Sample text for typing practice"
+	switch level {
+	case Junior:
+		return "The quick brown fox jumps over the lazy dog."
+	case Pleno:
+		return "Pack my box with five dozen liquor jugs."
+	case Senior:
+		return "Sphinx of black quartz, judge my vow!"
+	default:
+		return "Hello World!"
+	}
 }

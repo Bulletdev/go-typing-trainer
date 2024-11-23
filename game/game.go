@@ -20,6 +20,12 @@ type Game interface {
 	GetAPM() float64
 }
 
+// GameFactory interface for creating games
+type GameFactory interface {
+	CreateTypingGame(level DifficultyLevel) Game
+	CreateCodeWritingGame(level DifficultyLevel) Game
+}
+
 type BaseGame struct {
 	score           int
 	startTime       time.Time
