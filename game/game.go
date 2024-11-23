@@ -12,6 +12,7 @@ const (
 	Senior
 )
 
+// Game interface defines all required methods
 type Game interface {
 	Start()
 	Stop()
@@ -19,23 +20,30 @@ type Game interface {
 	GetAPM() float64
 }
 
-type GameFactory interface {
-	CreateTypingGame(level DifficultyLevel) Game
-	CreateCodeWritingGame(level DifficultyLevel) Game
+type BaseGame struct {
+	score           int
+	startTime       time.Time
+	keyPresses      int
+	difficultyLevel DifficultyLevel
+	antiCheat       AntiCheatInterface
+	database        DatabaseInterface
 }
 
-type BaseGame struct {
-	Score           int
-	StartTime       time.Time
-	KeyPresses      int
-	DifficultyLevel DifficultyLevel
-	AntiCheat       AntiCheatInterface
-	Database        DatabaseInterface
+func (g *BaseGame) GetScore() int {
+	return g.score
 }
 
 func (g *BaseGame) GetAPM() float64 {
-	duration := time.Since(g.StartTime).Minutes()
-	return float64(g.KeyPresses) / duration
+	duration := time.Since(g.startTime).Minutes()
+	if duration <= 0 {
+		return 0
+	}
+	return float64(g.keyPresses) / duration
+}
+
+func (g *BaseGame) incrementScore(points int) {
+	g.score += points
+	g.keyPresses++
 }
 
 type AntiCheatInterface interface {
